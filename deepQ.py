@@ -6,8 +6,21 @@ import random
 from collections import deque
 import flappy_bird_gym
 
-class DQN(nn.Module):
+class DQN(nn.Module): 
+    """Deep Q-Network (DQN) class for reinforcement learning.
+    
+    This class represents a neural network model used in the DQN algorithm for reinforcement learning.
+    It takes an input dimension and an output dimension as parameters and constructs a sequential network
+    with multiple linear and ReLU layers.
+    
+    Attributes:
+        network (nn.Sequential): The sequential network model.
+    
+    Methods:
+        forward(x): Performs a forward pass through the network.
+    """
     def __init__(self, input_dim, output_dim):
+        """Initialize the DQN model."""
         super(DQN, self).__init__()
         self.network = nn.Sequential(
             nn.Linear(input_dim, 64),
@@ -18,9 +31,25 @@ class DQN(nn.Module):
         )
     
     def forward(self, x):
+        """Perform a forward pass through the network."""
         return self.network(x)
 
 def optimize_model():
+    """
+    Optimize the model using a batch of transitions from the replay memory.
+
+    This function samples a batch of transitions from the replay memory and uses them to update the Q-values
+    of the policy network. The loss is calculated using the mean squared error between the predicted Q-values
+    and the target Q-values, which are calculated using the Bellman equation. The optimizer is used to minimize
+
+    the loss and update the weights of the policy network.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     if len(memory) < BATCH_SIZE:
         return
     transitions = random.sample(memory, BATCH_SIZE)
@@ -65,6 +94,19 @@ TARGET_UPDATE = 10
 steps_done = 0
 
 def select_action(state):
+    """
+    Select an action using an epsilon-greedy strategy.
+    
+    This function selects an action using an epsilon-greedy strategy based on the current state of the environment.
+    With probability epsilon, a random action is selected, and with probability 1 - epsilon, the action with the
+    highest Q-value is selected.
+    
+    Args:
+        state (torch.Tensor): The current state of the environment.
+    
+    Returns:
+        torch.Tensor: The selected action.    
+    """
     global steps_done
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * np.exp(-1. * steps_done / EPS_DECAY)
@@ -75,7 +117,8 @@ def select_action(state):
     else:
         return torch.tensor([[random.randrange(action_dim)]], dtype=torch.long)
 
-num_episodes = 500
+
+num_episodes = 500 
 for episode in range(num_episodes):
     state = env.reset()
     state = torch.tensor([state], dtype=torch.float)

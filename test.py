@@ -26,6 +26,14 @@ episode_scores = []
 def discretize_state(obs):
     """
     Convert continuous state into discrete bins.
+
+    This function discretizes the continuous state space into discrete bins.
+
+    Args:
+        obs (tuple): The current state of the environment.
+
+    Returns:
+        tuple: The discretized state.
     """
     vertical_dist, horizontal_dist = obs[0], obs[1]
     vertical_idx = np.digitize(vertical_dist, bin_edges)
@@ -35,6 +43,16 @@ def discretize_state(obs):
 def choose_action(state):
     """
     Epsilon-greedy action selection.
+
+    This function selects an action using an epsilon-greedy strategy based on the current state of the environment.
+    With probability epsilon, a random action is selected, and with probability 1 - epsilon, the action with the
+    highest Q-value is selected.
+
+    Args:
+        state (tuple): The current state of the environment.
+    
+    Returns:
+        int: The selected action.
     """
     global epsilon
     if np.random.rand() < epsilon:
@@ -43,6 +61,17 @@ def choose_action(state):
         return np.argmax(q_table[state])
     
 def render_episode(env):
+    """
+    Render an episode for visualization.
+    
+    This function renders an episode using the environment's render function.
+    
+    Args:
+        env (gym.Env): The environment to render.
+    
+    Returns:
+        None
+    """
     obs = env.reset()
     done = False
     while not done:
@@ -54,6 +83,17 @@ def render_episode(env):
 def update_q_table(state, action, reward, next_state):
     """
     Update Q-value using the Q-learning formula.
+
+    This function updates the Q-value of the state-action pair using the Q-learning formula.
+
+    Args:
+        state (tuple): The current state of the environment.
+        action (int): The action taken.
+        reward (float): The reward received.
+        next_state (tuple): The next state of the environment.
+
+    Returns:
+        None
     """
     best_next_action = np.argmax(q_table[next_state])
     td_target = reward + discount_factor * q_table[next_state + (best_next_action,)]
@@ -66,21 +106,23 @@ all_scores = []
 all_average_scores = []
 rendered = False
 
-for episode in range(num_episodes):
-    obs = env.reset()
-    state = discretize_state(obs)
+for episode in range(num_episodes): # Loop over the episodes
+    obs = env.reset() # Reset the environment
+    state = discretize_state(obs) # Discretize the state
     
-    total_reward = 0
+    # Initialize variables
+    total_reward = 0 
     steps = 0
     score = 0
     previous_score = 0
     
-    done = False
-    while not done:
-        action = choose_action(state)
-        next_obs, reward, done, info = env.step(action)
-        next_state = discretize_state(next_obs)
+    done = False 
+    while not done: # Loop over the steps
+        action = choose_action(state) # Choose an action
+        next_obs, reward, done, info = env.step(action) # Take a step
+        next_state = discretize_state(next_obs) # Discretize the next state
 
+        # Update the score and reward
         score = info['score']
         if score > previous_score:
             reward = 100  # Reward for passing a pipe
@@ -90,12 +132,14 @@ for episode in range(num_episodes):
         else:
             reward = -1 # encourage exploration
         
-        update_q_table(state, action, reward, next_state)
+        update_q_table(state, action, reward, next_state) 
         
+        # Update the state
         state = next_state
         total_reward += reward
         steps += 1
 
+    # Append the total reward and episode length
     episode_scores.append(score)
     all_scores.append(score)
     average_score = np.mean(episode_scores)
