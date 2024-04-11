@@ -2,6 +2,7 @@ import numpy as np
 import flappy_bird_gym
 import matplotlib.pyplot as plt
 import time
+import seaborn as sns
 
 env = flappy_bird_gym.make("FlappyBird-v0")
 
@@ -10,6 +11,7 @@ bin_edges = np.linspace(-0.5, 0.5, num_bins + 1)[1:-1]
 
 # Initialize Q-table
 q_table = np.zeros((num_bins, num_bins, 2))
+print (q_table)
 
 # Learning parameters
 learning_rate = 0.01
@@ -100,6 +102,33 @@ def update_q_table(state, action, reward, next_state):
     td_error = td_target - q_table[state + (action,)]
     q_table[state + (action,)] += learning_rate * td_error
 
+def plot_q_table_heatmaps(q_table):
+    """
+    Plot heatmaps of the Q-table for each action.
+    
+    This function plots heatmaps of the Q-table for each action to visualize the Q-values learned by the agent.
+    
+    Args:
+        q_table (np.ndarray): The Q-table to visualize.
+        
+    Returns:   
+        None
+    """
+    # Assuming action 0 is 'do nothing' and action 1 is 'flap'
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    sns.heatmap(q_table[:, :, 0], ax=axes[0], annot=True, cmap="viridis", cbar_kws={'label': 'Q-value'})
+    axes[0].set_title('Heatmap of Q-Values for "Do Nothing" Action')
+    axes[0].set_xlabel('Horizontal Distance Bin')
+    axes[0].set_ylabel('Vertical Distance Bin')
+
+    sns.heatmap(q_table[:, :, 1], ax=axes[1], annot=True, cmap="viridis", cbar_kws={'label': 'Q-value'})
+    axes[1].set_title('Heatmap of Q-Values for "Flap" Action')
+    axes[1].set_xlabel('Horizontal Distance Bin')
+    axes[1].set_ylabel('Vertical Distance Bin')
+
+    plt.suptitle('Q-Table Heatmaps for Different Actions')
+    plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust the layout to make room for the title
+    plt.show()
 
 num_episodes = 20000
 all_scores = []
@@ -169,5 +198,9 @@ plt.ylabel('Score')
 plt.title('Score and Average Score per Episode')
 plt.legend()
 plt.show()
+
+# Call this function at the end of your training or during diagnostics
+plot_q_table_heatmaps(q_table)
+# print (q_table)
 
 env.close()
