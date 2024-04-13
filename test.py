@@ -1,14 +1,21 @@
+'''
+This project implements Q-Learning on Flappy Bird using flappy_bird_gym. 
+
+Authors: Adlai Bridson-Boyczuk, Alice Slabosz, and Muhammad Ibrahim
+Date: 04/12/2024
+'''
+# Import libraries
 import numpy as np
 import flappy_bird_gym
 import matplotlib.pyplot as plt
 import time
 
+# Initialize Flappy Bird instance
 env = flappy_bird_gym.make("FlappyBird-v0")
 
+# Initialize Q-table
 num_bins = 15
 bin_edges = np.linspace(-0.5, 0.5, num_bins + 1)[1:-1]
-
-# Initialize Q-table
 q_table = np.zeros((num_bins, num_bins, 2))
 
 # Learning parameters
@@ -19,8 +26,10 @@ epsilon = 1.0
 epsilon_decay = 0.99
 epsilon_min = 0.01
 
+# Initialize lists
 episode_rewards = []
 episode_lengths = []
+episode_avg = []
 episode_scores = []
 
 def discretize_state(obs):
@@ -100,12 +109,13 @@ def update_q_table(state, action, reward, next_state):
     td_error = td_target - q_table[state + (action,)]
     q_table[state + (action,)] += learning_rate * td_error
 
-
+# Initialize loop parameters to get results
 num_episodes = 20000
 all_scores = []
 all_average_scores = []
 rendered = False
 
+# Loop games of flappy bird with Q-learning and print results for analysis
 for episode in range(num_episodes): # Loop over the episodes
     obs = env.reset() # Reset the environment
     state = discretize_state(obs) # Discretize the state
@@ -115,8 +125,8 @@ for episode in range(num_episodes): # Loop over the episodes
     steps = 0
     score = 0
     previous_score = 0
-    
     done = False 
+
     while not done: # Loop over the steps
         action = choose_action(state) # Choose an action
         next_obs, reward, done, info = env.step(action) # Take a step
@@ -138,6 +148,7 @@ for episode in range(num_episodes): # Loop over the episodes
         state = next_state
         total_reward += reward
         steps += 1
+        episode_rewards.append(total_reward)
 
     # Append the total reward and episode length
     episode_scores.append(score)
@@ -148,19 +159,19 @@ for episode in range(num_episodes): # Loop over the episodes
     # Decrease epsilon
     epsilon = max(epsilon_min, epsilon * epsilon_decay)
 
-    # Render if score > 15 and not already rendered
-    #if score > 15 and not rendered:
-    #    render_episode(env)
-    #    rendered = True  # Set the flag to True after rendering
-
+    # Every 1000 episodes, reduce learning rate
     if episode % 1000 == 0 and episode != 0:
-        learning_rate *= 0.9  # Reduce learning rate every 1000 episodes
+        learning_rate *= 0.9 
         print(f"Reduced learning rate to: {learning_rate}")
 
+    # Every 100 episodes, print results and append the average rewards then clear
     if episode % 100 == 0:
         print(f"Episode: {episode}, Total Average Score: {average_score:.2f}, Score: {score}, Total Reward: {total_reward}, Episode Length: {steps}")
+        temp = np.mean(episode_rewards)
+        episode_avg.append(temp)
+        episode_rewards.clear
 
-# Plotting
+# Plotting score per episode and average score per episode
 plt.figure(figsize=(10, 5))
 plt.plot(all_scores, label='Score per Episode')
 plt.plot(all_average_scores, label='Average Score')
@@ -170,4 +181,21 @@ plt.title('Score and Average Score per Episode')
 plt.legend()
 plt.show()
 
+# Initialize parameters for scatterplot
+step = 100  # Number of episodes to average over
+eps = []
+for i in range(num_episodes):
+    eps.append(i)
+episodes = eps[0::step]
+
+# Implement scatterplot for rewards per episode by averaging each 100 episodes for clearer graphing
+plt.figure(figsize=(12, 6))
+plt.scatter(episodes, episode_avg, s=10, alpha=0.6)  # Small markers, slightly transparent
+plt.xlabel('Episode')
+plt.ylabel('Average Total Reward')
+plt.title('Average Total Rewards Per Every {} Episodes'.format(step))
+plt.grid(True)
+plt.show()
+
+# Close Flappy Bird instance
 env.close()
